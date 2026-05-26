@@ -10,7 +10,7 @@ import { themes as prismThemes } from "prism-react-renderer";
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "SaaS Team",
+  title: "Paypoint Team",
   tagline: "Training Documentation",
   favicon: "img/favicon.ico",
 
