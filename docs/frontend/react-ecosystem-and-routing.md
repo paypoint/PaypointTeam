@@ -119,26 +119,6 @@ export default ErrorBoundary;
 
 ---
 
-### Using Error Boundary
-
-```jsx
-import React from "react";
-import ErrorBoundary from "./ErrorBoundary";
-import Home from "./Home";
-
-function App() {
-  return (
-    <ErrorBoundary>
-      <Home />
-    </ErrorBoundary>
-  );
-}
-
-export default App;
-```
-
----
-
 ## Uncontrolled Form
 
 In React, an **Uncontrolled Form** is a form where the input values are handled by the DOM itself, not by React state.
@@ -183,15 +163,11 @@ export default Form;
 
 ## TanStack Router
 
-TanStack Router is made for client-side use cases.
-
-React Router and Remix have shifted a lot of focus to a more full-stack experience, while TanStack Router focuses on scalable and type-safe routing.
-
 TanStack Router is a modern routing library for React applications that helps manage navigation between pages in a more flexible and scalable way.
 
 ---
 
-### Define Routes
+### Example
 
 ```jsx
 import {
@@ -231,56 +207,9 @@ export default router;
 
 ---
 
-### Use Router
-
-```jsx
-import React from "react";
-import ReactDOM from "react-dom/client";
-
-import {
-  RouterProvider,
-} from "@tanstack/react-router";
-
-import router from "./router";
-
-ReactDOM.createRoot(
-  document.getElementById("root")
-).render(
-  <RouterProvider router={router} />
-);
-```
-
----
-
-### Navigation
-
-```jsx
-import { Link } from "@tanstack/react-router";
-
-function Navbar() {
-  return (
-    <div>
-      <Link to="/">
-        Home
-      </Link>
-
-      <Link to="/about">
-        About
-      </Link>
-    </div>
-  );
-}
-
-export default Navbar;
-```
-
----
-
 ## TanStack Query
 
 TanStack Query is a library used for data fetching, caching, and synchronization in React applications.
-
-It replaces manual API handling using `useEffect` and `fetch` with a smarter and optimized system.
 
 ---
 
@@ -333,4 +262,165 @@ function App() {
 }
 
 export default App;
+```
+
+---
+
+## Lazy Loading and Skeleton UI
+
+Lazy Loading and Skeleton UI are modern React techniques used to improve application performance and user experience.
+
+---
+
+## Lazy Loading
+
+Lazy Loading allows components to load only when they are needed instead of loading everything at once.
+
+This improves:
+
+- Performance
+- Initial loading speed
+- Bundle optimization
+
+Example: Loading Dashboard only after login.
+
+---
+
+### Example
+
+```jsx
+import React, {
+  Suspense,
+  lazy,
+} from "react";
+
+const Dashboard = lazy(() =>
+  import("./Dashboard")
+);
+
+function App() {
+  return (
+    <div>
+      <h1>React Application</h1>
+
+      <Suspense
+        fallback={
+          <h2>Loading...</h2>
+        }
+      >
+        <Dashboard />
+      </Suspense>
+    </div>
+  );
+}
+
+export default App;
+```
+
+---
+
+## Skeleton UI
+
+Skeleton UI displays placeholder content while actual data is loading.
+
+Instead of showing a spinner, it shows a fake layout similar to the real content.
+
+---
+
+### Example
+
+```jsx
+import React from "react";
+
+import Skeleton from "@mui/material/Skeleton";
+
+import Stack from "@mui/material/Stack";
+
+function UserLoader() {
+  return (
+    <Stack spacing={1}>
+      <Skeleton
+        variant="text"
+        width={200}
+        height={40}
+      />
+
+      <Skeleton
+        variant="rectangular"
+        width={300}
+        height={120}
+      />
+
+      <Skeleton
+        variant="circular"
+        width={50}
+        height={50}
+      />
+    </Stack>
+  );
+}
+
+export default UserLoader;
+```
+
+---
+
+## Example with API Loading
+
+```jsx
+import React, {
+  useEffect,
+  useState,
+} from "react";
+
+import Skeleton from "@mui/material/Skeleton";
+
+function Users() {
+  const [users, setUsers] =
+    useState([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  useEffect(() => {
+    fetch(
+      "https://jsonplaceholder.typicode.com/users"
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        setUsers(data);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <div>
+        <Skeleton
+          variant="text"
+          width={200}
+          height={40}
+        />
+
+        <Skeleton
+          variant="rectangular"
+          width={300}
+          height={100}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {users.map((user) => (
+        <h3 key={user.id}>
+          {user.name}
+        </h3>
+      ))}
+    </div>
+  );
+}
+
+export default Users;
 ```
