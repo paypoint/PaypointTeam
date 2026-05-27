@@ -1,1 +1,631 @@
 # 8. Database Design and Security
+
+A database is not just about storing data.
+
+A well-designed database should:
+
+* store data correctly
+* avoid duplication
+* maintain relationships
+* improve performance
+* protect sensitive information
+* scale for future growth
+
+Good database design and security are extremely important in:
+
+* banking systems
+* healthcare systems
+* payment applications
+* HRMS systems
+* Video KYC systems
+
+This chapter explains:
+
+* database design principles
+* normalization
+* keys and relationships
+* constraints
+* security basics
+* access control
+* backup and protection concepts
+
+---
+
+# Dataset Used in This Chapter
+
+Assume the following tables:
+
+## customers
+
+| customer_id | name  | city   |
+| ----------- | ----- | ------ |
+| 1           | Rahul | Mumbai |
+| 2           | Anita | Delhi  |
+
+---
+
+## accounts
+
+| account_id | customer_id | account_type | balance |
+| ---------- | ----------- | ------------ | ------- |
+| 101        | 1           | Savings      | 50000   |
+| 102        | 2           | Current      | 70000   |
+
+---
+
+# 1. What is Database Design?
+
+Database design means organizing data properly inside tables.
+
+A good design ensures:
+
+* minimal redundancy
+* proper relationships
+* easy querying
+* scalability
+* data consistency
+
+---
+
+# Goals of Good Database Design
+
+| Goal                   | Explanation                        |
+| ---------------------- | ---------------------------------- |
+| Reduce duplicate data  | Avoid storing same data repeatedly |
+| Improve consistency    | Keep data accurate                 |
+| Maintain relationships | Connect related tables             |
+| Improve performance    | Faster queries                     |
+| Improve scalability    | Handle future growth               |
+
+---
+
+# 2. Tables and Relationships
+
+Data is usually divided into multiple related tables.
+
+Example:
+
+Instead of storing:
+
+| customer_name | city | account_type | balance |
+| ------------- | ---- | ------------ | ------- |
+
+in one large table repeatedly,
+
+we separate data into:
+
+* customers
+* accounts
+
+This reduces duplication.
+
+---
+
+# 3. Primary Key (PK)
+
+A Primary Key uniquely identifies each row.
+
+Example:
+
+```sql id="ylk5hy"
+customer_id INT PRIMARY KEY
+```
+
+---
+
+# Why Primary Keys Matter
+
+Primary keys:
+
+* prevent duplicate rows
+* uniquely identify records
+* improve indexing
+* help create relationships
+
+---
+
+# Example
+
+| customer_id | name  |
+| ----------- | ----- |
+| 1           | Rahul |
+| 2           | Anita |
+
+`customer_id` uniquely identifies each customer.
+
+---
+
+# 4. Foreign Key (FK)
+
+A Foreign Key creates relationships between tables.
+
+---
+
+# Example
+
+```sql id="g8yquf"
+customer_id INT,
+FOREIGN KEY (customer_id)
+REFERENCES customers(customer_id)
+```
+
+---
+
+# Relationship
+
+```text id="3g1y2d"
+customers
+    ↓
+accounts
+```
+
+Each account belongs to a customer.
+
+---
+
+# Why Foreign Keys Matter
+
+Foreign keys:
+
+* maintain data integrity
+* prevent invalid references
+* enforce relationships
+
+---
+
+# Example Problem Prevented
+
+Without foreign key:
+
+* account may reference non-existing customer.
+
+Foreign key prevents this issue.
+
+---
+
+# 5. One-to-One Relationship
+
+One record relates to one record.
+
+---
+
+# Example
+
+| User  | Aadhaar   |
+| ----- | --------- |
+| Rahul | 1 Aadhaar |
+
+Used in:
+
+* identity systems
+* KYC systems
+
+---
+
+# 6. One-to-Many Relationship
+
+One record relates to multiple records.
+
+---
+
+# Example
+
+| Customer | Multiple Accounts |
+| -------- | ----------------- |
+| Rahul    | Savings + Current |
+
+This is the most common relationship type.
+
+---
+
+# 7. Many-to-Many Relationship
+
+Many records relate to many records.
+
+Usually handled using a junction table.
+
+---
+
+# Example
+
+Students and Courses.
+
+One student:
+
+* can join many courses.
+
+One course:
+
+* can have many students.
+
+---
+
+# Junction Table Example
+
+| student_id | course_id |
+| ---------- | --------- |
+
+---
+
+# 8. Normalization
+
+Normalization means organizing data to reduce duplication and improve consistency.
+
+---
+
+# Why Normalization?
+
+Without normalization:
+
+* duplicate data increases
+* updates become difficult
+* inconsistencies appear
+
+---
+
+# Example of Bad Design
+
+| customer_name | city   | account_type |
+| ------------- | ------ | ------------ |
+| Rahul         | Mumbai | Savings      |
+| Rahul         | Mumbai | Current      |
+
+City repeated multiple times.
+
+---
+
+# Better Design
+
+Separate:
+
+* customers table
+* accounts table
+
+This reduces redundancy.
+
+---
+
+# 9. Common Normal Forms
+
+---
+
+# 9.1 First Normal Form (1NF)
+
+Rules:
+
+* each column should contain atomic values
+* no multiple values in one column
+
+---
+
+❌ Wrong
+
+| customer | phone_numbers |
+| -------- | ------------- |
+| Rahul    | 9876,1234     |
+
+---
+
+✅ Correct
+
+| customer | phone_number |
+| -------- | ------------ |
+| Rahul    | 9876         |
+| Rahul    | 1234         |
+
+---
+
+# 9.2 Second Normal Form (2NF)
+
+Remove partial dependency.
+
+Non-key columns should fully depend on primary key.
+
+---
+
+# 9.3 Third Normal Form (3NF)
+
+Remove unnecessary dependency between non-key columns.
+
+This is commonly used in production systems.
+
+---
+
+# 10. Constraints
+
+Constraints enforce rules on data.
+
+---
+
+# 10.1 NOT NULL
+
+Column cannot be empty.
+
+```sql id="jlwm9o"
+name VARCHAR(100) NOT NULL
+```
+
+---
+
+# 10.2 UNIQUE
+
+Prevents duplicate values.
+
+```sql id="4p1x1d"
+email VARCHAR(100) UNIQUE
+```
+
+---
+
+# 10.3 CHECK
+
+Validates conditions.
+
+```sql id="9shq6m"
+CHECK(balance >= 0)
+```
+
+Prevents negative balance.
+
+---
+
+# 10.4 DEFAULT
+
+Sets default value automatically.
+
+```sql id="7vx0kk"
+is_active BOOLEAN DEFAULT TRUE
+```
+
+---
+
+# 11. Database Security
+
+Security is extremely important.
+
+Databases often store:
+
+* passwords
+* personal data
+* banking data
+* KYC documents
+* financial records
+
+A security mistake can cause:
+
+* data leaks
+* fraud
+* legal issues
+
+---
+
+# 12. User Roles and Permissions
+
+Not every user should access everything.
+
+---
+
+# Example Roles
+
+| Role     | Permission     |
+| -------- | -------------- |
+| Admin    | Full access    |
+| Employee | Limited access |
+| Viewer   | Read-only      |
+
+---
+
+# SQL Example
+
+```sql id="bgqjlwm"
+GRANT SELECT
+ON customers
+TO report_user;
+```
+
+Allows only read access.
+
+---
+
+# 13. Principle of Least Privilege
+
+Users should get only required permissions.
+
+Example:
+
+* reporting user should NOT delete data.
+
+---
+
+# 14. Password Security
+
+Never store plain-text passwords.
+
+---
+
+# Wrong
+
+```text id="2mpxhc"
+password = "rahul123"
+```
+
+---
+
+# Correct
+
+Store hashed passwords.
+
+Example:
+
+* bcrypt
+* Argon2
+* PBKDF2
+
+---
+
+# 15. SQL Injection
+
+SQL Injection is a major security attack.
+
+It happens when user input is directly added into SQL query.
+
+---
+
+# Dangerous Query
+
+❌ Wrong
+
+```sql id="xjjlwm"
+SELECT *
+FROM users
+WHERE username = '" + username + "'
+```
+
+Attackers can manipulate query.
+
+---
+
+# Safe Approach
+
+✅ Use parameterized queries.
+
+Example in .NET:
+
+```csharp id="1jgrrc"
+var query = "SELECT * FROM users WHERE username = @username";
+```
+
+---
+
+# 16. Backups
+
+Backups protect against:
+
+* accidental deletion
+* hardware failure
+* ransomware
+* corruption
+
+---
+
+# Types of Backups
+
+| Backup Type         | Description                    |
+| ------------------- | ------------------------------ |
+| Full Backup         | Entire database                |
+| Incremental Backup  | Only changed data              |
+| Differential Backup | Changes since last full backup |
+
+---
+
+# 17. Index Security and Performance
+
+Indexes improve performance but too many indexes:
+
+* increase storage
+* slow inserts/updates
+
+Balance is important.
+
+---
+
+# 18. Sensitive Data Protection
+
+Sensitive fields should be protected.
+
+Examples:
+
+* Aadhaar number
+* PAN number
+* bank details
+* KYC documents
+
+---
+
+# Common Protection Methods
+
+| Method         | Purpose               |
+| -------------- | --------------------- |
+| Encryption     | Protect stored data   |
+| Masking        | Hide sensitive values |
+| Access Control | Restrict visibility   |
+
+---
+
+# 19. Common Design Mistakes
+
+---
+
+# 19.1 Storing Duplicate Data
+
+❌ Bad Design
+
+Same customer data repeated everywhere.
+
+---
+
+# 19.2 No Foreign Keys
+
+Can create orphan records.
+
+---
+
+# 19.3 Too Many Columns in One Table
+
+Creates huge difficult-to-manage tables.
+
+---
+
+# 19.4 Using VARCHAR for Everything
+
+Wrong data types reduce performance.
+
+---
+
+# 19.5 Giving Full DB Access to Everyone
+
+Major security risk.
+
+---
+
+# 20. Best Practices
+
+| Best Practice              | Reason                 |
+| -------------------------- | ---------------------- |
+| Use normalization          | Reduce duplication     |
+| Use foreign keys           | Maintain relationships |
+| Use indexes wisely         | Improve performance    |
+| Use constraints            | Enforce data integrity |
+| Use parameterized queries  | Prevent SQL injection  |
+| Encrypt sensitive data     | Improve security       |
+| Take regular backups       | Disaster recovery      |
+| Use least privilege access | Minimize risk          |
+
+---
+
+# 21. How to Think About Database Design
+
+Before creating tables ask:
+
+1. What entities exist?
+2. How are tables related?
+3. Which fields are unique?
+4. Which columns can be NULL?
+5. What validations are required?
+6. Which data is sensitive?
+7. Which queries will run frequently?
+8. Will system scale in future?
+
+---
+
+# 22. Mini Practice Questions
+
+Try solving these without looking at solutions:
+
+1. Create customers and accounts tables with primary and foreign keys
+2. Add UNIQUE constraint on email column
+3. Add CHECK constraint to prevent negative balance
+4. Design one-to-many relationship between customers and orders
+5. Write SQL to grant read-only access to a reporting user
+6. Explain why parameterized queries prevent SQL injection
+

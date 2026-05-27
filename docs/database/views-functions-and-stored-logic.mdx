@@ -1,1 +1,600 @@
 # 6. Views, Functions & Stored Logic
+
+As applications grow, SQL queries also become larger and more complex.
+
+Instead of writing the same query repeatedly, SQL provides reusable database objects such as:
+
+* Views
+* Functions
+* Stored Procedures
+
+These help developers:
+
+* reduce duplicate SQL
+* improve readability
+* centralize business logic
+* improve security
+* simplify reporting
+
+This chapter teaches how reusable database logic works.
+
+---
+
+# Dataset Used in This Chapter
+
+Assume the following `employees` table:
+
+| id | name   | department | salary | city   | is_active |
+| -- | ------ | ---------- | ------ | ------ | --------- |
+| 1  | Rahul  | IT         | 60000  | Mumbai | TRUE      |
+| 2  | Anita  | HR         | 45000  | Delhi  | TRUE      |
+| 3  | Karan  | IT         | 70000  | Mumbai | FALSE     |
+| 4  | Neha   | Finance    | 80000  | Pune   | TRUE      |
+| 5  | Aman   | HR         | 50000  | Delhi  | TRUE      |
+| 6  | Simran | IT         | 75000  | Pune   | TRUE      |
+
+All examples below are based on this data.
+
+---
+
+# 1. Views
+
+A View is a virtual table created from a SQL query.
+
+A View does NOT store data separately in most cases.
+
+Instead:
+
+* it stores the SQL query,
+* and shows data dynamically whenever accessed.
+
+Think of a View as:
+
+* a saved SELECT query.
+
+---
+
+# Why Views Are Used
+
+Views help:
+
+* simplify complex queries
+* hide sensitive columns
+* create reusable reports
+* improve readability
+* restrict direct table access
+
+---
+
+# 1.1 Creating a View
+
+## Problem
+
+Create a view for active employees.
+
+```sql id="tzd7k4"
+CREATE VIEW active_employees AS
+SELECT
+    id,
+    name,
+    department,
+    salary
+FROM employees
+WHERE is_active = TRUE;
+```
+
+---
+
+# Using the View
+
+```sql id="yl5n9y"
+SELECT *
+FROM active_employees;
+```
+
+## Output
+
+| id | name   | department | salary |
+| -- | ------ | ---------- | ------ |
+| 1  | Rahul  | IT         | 60000  |
+| 2  | Anita  | HR         | 45000  |
+| 4  | Neha   | Finance    | 80000  |
+| 5  | Aman   | HR         | 50000  |
+| 6  | Simran | IT         | 75000  |
+
+---
+
+# 1.2 View for Reporting
+
+## Problem
+
+Create department salary report view.
+
+```sql id="jlpt1l"
+CREATE VIEW department_salary_report AS
+SELECT
+    department,
+    COUNT(*) AS total_employees,
+    SUM(salary) AS total_salary
+FROM employees
+GROUP BY department;
+```
+
+---
+
+# Querying the View
+
+```sql id="smc1oh"
+SELECT *
+FROM department_salary_report;
+```
+
+## Output
+
+| department | total_employees | total_salary |
+| ---------- | --------------- | ------------ |
+| IT         | 3               | 205000       |
+| HR         | 2               | 95000        |
+| Finance    | 1               | 80000        |
+
+---
+
+# 1.3 Advantages of Views
+
+| Advantage       | Explanation                  |
+| --------------- | ---------------------------- |
+| Reusability     | Same query reused everywhere |
+| Security        | Hide sensitive columns       |
+| Simplicity      | Complex SQL becomes simple   |
+| Reporting       | Easy dashboard queries       |
+| Maintainability | Update query in one place    |
+
+---
+
+# 1.4 Common Real-World Uses
+
+Views are heavily used in:
+
+* banking dashboards
+* reporting systems
+* analytics systems
+* finance reports
+* admin panels
+* Video KYC reporting systems
+
+Example:
+
+* daily verification report
+* active customer summary
+* failed verification list
+
+---
+
+# 2. Functions
+
+Functions are reusable SQL logic blocks that return a value.
+
+Functions help:
+
+* avoid repeated calculations
+* centralize business logic
+* simplify queries
+
+---
+
+# Types of Functions
+
+| Type                   | Description                            |
+| ---------------------- | -------------------------------------- |
+| Built-in Functions     | COUNT(), SUM(), AVG()                  |
+| User Defined Functions | Custom functions created by developers |
+
+---
+
+# 2.1 Scalar Function
+
+A scalar function returns a single value.
+
+---
+
+## Problem
+
+Create function to calculate yearly salary.
+
+```sql id="1kmd5u"
+CREATE FUNCTION yearly_salary(monthly_salary INT)
+RETURNS INT
+BEGIN
+    RETURN monthly_salary * 12;
+END;
+```
+
+---
+
+# Using the Function
+
+```sql id="zn78w7"
+SELECT
+    name,
+    salary,
+    yearly_salary(salary) AS annual_salary
+FROM employees;
+```
+
+## Output
+
+| name  | salary | annual_salary |
+| ----- | ------ | ------------- |
+| Rahul | 60000  | 720000        |
+| Anita | 45000  | 540000        |
+| Karan | 70000  | 840000        |
+
+---
+
+# 2.2 Function with Conditions
+
+## Problem
+
+Create function to classify salary grade.
+
+```sql id="y11jlwm"
+CREATE FUNCTION salary_grade(emp_salary INT)
+RETURNS VARCHAR(20)
+BEGIN
+    IF emp_salary >= 70000 THEN
+        RETURN 'High';
+    ELSEIF emp_salary >= 50000 THEN
+        RETURN 'Medium';
+    ELSE
+        RETURN 'Low';
+    END IF;
+END;
+```
+
+---
+
+# Using Function
+
+```sql id="7qx3jk"
+SELECT
+    name,
+    salary,
+    salary_grade(salary) AS salary_category
+FROM employees;
+```
+
+## Output
+
+| name  | salary | salary_category |
+| ----- | ------ | --------------- |
+| Rahul | 60000  | Medium          |
+| Anita | 45000  | Low             |
+| Karan | 70000  | High            |
+
+---
+
+# 2.3 Advantages of Functions
+
+| Advantage         | Explanation                  |
+| ----------------- | ---------------------------- |
+| Reusable Logic    | Same logic reused everywhere |
+| Cleaner Queries   | Simplifies SELECT queries    |
+| Centralized Logic | Update logic once            |
+| Consistency       | Same calculation everywhere  |
+
+---
+
+# 3. Stored Procedures (Stored Logic)
+
+Stored Procedures are pre-written SQL programs stored inside the database.
+
+A Stored Procedure can:
+
+* accept parameters
+* perform queries
+* insert/update/delete data
+* execute business logic
+* return results
+
+Stored Procedures are heavily used in enterprise systems.
+
+---
+
+# Why Stored Procedures Are Important
+
+Used for:
+
+* business logic
+* APIs
+* banking systems
+* payroll systems
+* KYC workflows
+* reporting systems
+
+---
+
+# 3.1 Simple Stored Procedure
+
+## Problem
+
+Get all employees.
+
+```sql id="8q6h7l"
+CREATE PROCEDURE get_all_employees()
+BEGIN
+    SELECT *
+    FROM employees;
+END;
+```
+
+---
+
+# Execute Procedure
+
+```sql id="6dbprw"
+CALL get_all_employees();
+```
+
+---
+
+# 3.2 Stored Procedure with Parameters
+
+## Problem
+
+Get employees by department.
+
+```sql id="uq4cm5"
+CREATE PROCEDURE get_employees_by_department(
+    IN dept_name VARCHAR(50)
+)
+BEGIN
+    SELECT
+        name,
+        salary,
+        department
+    FROM employees
+    WHERE department = dept_name;
+END;
+```
+
+---
+
+# Execute Procedure
+
+```sql id="bqik9z"
+CALL get_employees_by_department('IT');
+```
+
+## Output
+
+| name   | salary | department |
+| ------ | ------ | ---------- |
+| Rahul  | 60000  | IT         |
+| Karan  | 70000  | IT         |
+| Simran | 75000  | IT         |
+
+---
+
+# 3.3 Insert Procedure
+
+## Problem
+
+Create procedure to insert employee.
+
+```sql id="2rzvru"
+CREATE PROCEDURE add_employee(
+    IN emp_name VARCHAR(100),
+    IN emp_department VARCHAR(50),
+    IN emp_salary INT,
+    IN emp_city VARCHAR(50)
+)
+BEGIN
+    INSERT INTO employees
+    (
+        name,
+        department,
+        salary,
+        city,
+        is_active
+    )
+    VALUES
+    (
+        emp_name,
+        emp_department,
+        emp_salary,
+        emp_city,
+        TRUE
+    );
+END;
+```
+
+---
+
+# Execute Procedure
+
+```sql id="2m40ul"
+CALL add_employee(
+    'Riya',
+    'Finance',
+    65000,
+    'Mumbai'
+);
+```
+
+---
+
+# 3.4 Update Procedure
+
+## Problem
+
+Update employee salary.
+
+```sql id="muh1w9"
+CREATE PROCEDURE update_salary(
+    IN emp_id INT,
+    IN new_salary INT
+)
+BEGIN
+    UPDATE employees
+    SET salary = new_salary
+    WHERE id = emp_id;
+END;
+```
+
+---
+
+# Execute Procedure
+
+```sql id="c9o4hx"
+CALL update_salary(1, 85000);
+```
+
+---
+
+# 3.5 Advantages of Stored Procedures
+
+| Advantage             | Explanation                  |
+| --------------------- | ---------------------------- |
+| Performance           | Precompiled execution        |
+| Security              | Restrict direct table access |
+| Reusable Logic        | Centralized business logic   |
+| Maintainability       | Logic managed inside DB      |
+| Reduced Network Calls | Multiple operations together |
+
+---
+
+# 4. Views vs Functions vs Stored Procedures
+
+| Feature                 | View       | Function   | Stored Procedure |
+| ----------------------- | ---------- | ---------- | ---------------- |
+| Returns Data            | Yes        | Yes        | Yes              |
+| Accept Parameters       | No         | Yes        | Yes              |
+| Contains Business Logic | Limited    | Moderate   | Advanced         |
+| Used in SELECT          | Yes        | Yes        | Sometimes        |
+| Can Modify Data         | Usually No | Usually No | Yes              |
+
+---
+
+# 5. Real-World Enterprise Usage
+
+---
+
+# Banking Systems
+
+Stored Procedures:
+
+* money transfer
+* account verification
+* transaction history
+
+Views:
+
+* customer dashboards
+* account summaries
+
+Functions:
+
+* interest calculation
+* tax calculation
+
+---
+
+# HRMS Systems
+
+Views:
+
+* employee reports
+
+Functions:
+
+* salary calculations
+
+Stored Procedures:
+
+* employee onboarding
+* payroll processing
+
+---
+
+# Video KYC Systems
+
+Views:
+
+* daily verification report
+* failed KYC list
+
+Functions:
+
+* risk scoring
+* verification status calculation
+
+Stored Procedures:
+
+* create KYC session
+* update verification result
+* generate audit logs
+
+---
+
+# 6. Common Mistakes
+
+---
+
+# 6.1 Putting Too Much Logic Inside Views
+
+Views should mainly be used for:
+
+* reusable queries
+* reporting
+
+Not very heavy business workflows.
+
+---
+
+# 6.2 Repeating Logic Instead of Functions
+
+❌ Wrong
+
+Writing same calculation repeatedly.
+
+✅ Better
+
+Create reusable function.
+
+---
+
+# 6.3 Large Application Logic Inside Procedures
+
+Stored Procedures should handle:
+
+* database logic
+* validations
+* transactions
+
+Avoid placing entire application logic inside DB.
+
+---
+
+# 7. How to Decide What to Use
+
+| Requirement                   | Best Choice      |
+| ----------------------------- | ---------------- |
+| Reusable SELECT query         | View             |
+| Reusable calculation          | Function         |
+| Insert/Update/Delete workflow | Stored Procedure |
+| Reporting dashboard           | View             |
+| Salary calculation            | Function         |
+| Transaction workflow          | Stored Procedure |
+
+---
+
+# 8. Mini Practice Questions
+
+Try solving these without looking at solutions:
+
+1. Create a view for active employees only
+2. Create a department-wise salary report using a view
+3. Create a function to calculate bonus amount
+4. Create a function to classify employee salary levels
+5. Create a stored procedure to get employees by city
+6. Create a stored procedure to update employee department

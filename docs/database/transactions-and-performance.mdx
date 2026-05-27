@@ -1,1 +1,581 @@
 # 7. Transactions and Performance
+
+In real-world applications, data correctness and query speed are extremely important.
+
+Imagine:
+
+* bank transfers,
+* payment systems,
+* Video KYC verification,
+* e-commerce orders,
+* payroll systems.
+
+A small mistake can:
+
+* lose money,
+* corrupt data,
+* create duplicate records,
+* slow down the entire system.
+
+This chapter explains:
+
+* Transactions
+* COMMIT and ROLLBACK
+* ACID properties
+* Query performance
+* Indexing basics
+* SQL optimization concepts
+
+This is one of the most important chapters for production systems.
+
+---
+
+# Dataset Used in This Chapter
+
+Assume the following `accounts` table:
+
+| id | customer_name | balance | city   |
+| -- | ------------- | ------- | ------ |
+| 1  | Rahul         | 50000   | Mumbai |
+| 2  | Anita         | 30000   | Delhi  |
+| 3  | Karan         | 45000   | Pune   |
+
+And `transactions` table:
+
+| txn_id | sender_id | receiver_id | amount |
+| ------ | --------- | ----------- | ------ |
+| 101    | 1         | 2           | 5000   |
+| 102    | 2         | 3           | 3000   |
+
+All examples below are based on this data.
+
+---
+
+# 1. What is a Transaction?
+
+A Transaction is a group of SQL operations executed as a single unit.
+
+Either:
+
+* ALL operations succeed
+  OR
+* ALL operations fail.
+
+There should never be partial execution.
+
+---
+
+# Real-World Example
+
+Suppose Rahul transfers ₹5000 to Anita.
+
+Two operations happen:
+
+1. Deduct money from Rahul
+2. Add money to Anita
+
+If only one query succeeds:
+
+* money gets lost,
+* data becomes inconsistent.
+
+Transactions solve this problem.
+
+---
+
+# 2. BEGIN TRANSACTION
+
+A transaction starts using:
+
+```sql id="d7uxlt"
+BEGIN;
+```
+
+OR in some databases:
+
+```sql id="ozmiv7"
+START TRANSACTION;
+```
+
+---
+
+# 3. COMMIT
+
+`COMMIT` permanently saves changes.
+
+---
+
+## Problem
+
+Transfer ₹5000 from Rahul to Anita.
+
+```sql id="99d98f"
+BEGIN;
+
+UPDATE accounts
+SET balance = balance - 5000
+WHERE id = 1;
+
+UPDATE accounts
+SET balance = balance + 5000
+WHERE id = 2;
+
+COMMIT;
+```
+
+---
+
+# What Happens?
+
+Before transaction:
+
+| customer_name | balance |
+| ------------- | ------- |
+| Rahul         | 50000   |
+| Anita         | 30000   |
+
+After COMMIT:
+
+| customer_name | balance |
+| ------------- | ------- |
+| Rahul         | 45000   |
+| Anita         | 35000   |
+
+Changes become permanent.
+
+---
+
+# 4. ROLLBACK
+
+`ROLLBACK` cancels the transaction.
+
+If an error occurs:
+
+* database restores previous state.
+
+---
+
+## Problem
+
+Transaction failed midway.
+
+```sql id="e9drgc"
+BEGIN;
+
+UPDATE accounts
+SET balance = balance - 5000
+WHERE id = 1;
+
+ROLLBACK;
+```
+
+---
+
+# Result
+
+No changes are saved.
+
+Rahul’s balance remains:
+
+```text id="mj2m5m"
+50000
+```
+
+This prevents partial updates.
+
+---
+
+# 5. Why Transactions Are Important
+
+Transactions are critical in:
+
+* banking systems
+* UPI systems
+* payment gateways
+* inventory systems
+* payroll systems
+* Video KYC workflows
+
+---
+
+# Example in Video KYC
+
+Suppose:
+
+* customer session created
+* video uploaded
+* audit log inserted
+
+If video upload fails:
+
+* everything should rollback.
+
+Otherwise:
+
+* incomplete KYC records appear.
+
+---
+
+# 6. ACID Properties
+
+Transactions follow ACID principles.
+
+These are the foundation of reliable databases.
+
+---
+
+# 6.1 Atomicity
+
+"All or Nothing"
+
+Either:
+
+* all queries succeed
+  OR
+* none succeed.
+
+No partial updates.
+
+---
+
+# 6.2 Consistency
+
+Database remains valid before and after transaction.
+
+Example:
+
+* account balance cannot become negative accidentally.
+
+---
+
+# 6.3 Isolation
+
+Multiple transactions should not interfere with each other.
+
+Example:
+
+* two users updating same account simultaneously.
+
+---
+
+# 6.4 Durability
+
+After COMMIT:
+
+* data is permanently saved,
+* even if server crashes.
+
+---
+
+# 7. Common Transaction Problems
+
+---
+
+# 7.1 Partial Updates
+
+❌ Wrong
+
+```sql id="myl0ql"
+UPDATE sender_account;
+-- system crash
+UPDATE receiver_account;
+```
+
+This causes inconsistent data.
+
+---
+
+✅ Correct
+
+Use transaction.
+
+```sql id="1zt7wp"
+BEGIN;
+UPDATE sender_account;
+UPDATE receiver_account;
+COMMIT;
+```
+
+---
+
+# 7.2 Forgetting COMMIT
+
+If COMMIT is missing:
+
+* transaction may not save permanently.
+
+---
+
+# 7.3 Long Transactions
+
+Very long transactions:
+
+* lock rows,
+* reduce performance,
+* block users.
+
+Keep transactions short.
+
+---
+
+# 8. SQL Performance Basics
+
+As tables grow:
+
+* queries become slower.
+
+Performance optimization becomes important.
+
+---
+
+# Common Causes of Slow Queries
+
+| Problem                 | Impact                  |
+| ----------------------- | ----------------------- |
+| No indexes              | Full table scan         |
+| SELECT * everywhere     | Extra data load         |
+| Large joins             | High CPU usage          |
+| Unnecessary sorting     | Slow execution          |
+| Too many nested queries | Complex execution plans |
+
+---
+
+# 9. Indexes
+
+Indexes improve query speed.
+
+Think of an index like a book index.
+
+Without index:
+
+* SQL scans entire table.
+
+With index:
+
+* SQL quickly finds required rows.
+
+---
+
+# 9.1 Creating an Index
+
+## Problem
+
+Frequently searching users by city.
+
+```sql id="ugbn2q"
+CREATE INDEX idx_city
+ON accounts(city);
+```
+
+---
+
+# Benefit
+
+This query becomes faster:
+
+```sql id="p5w4jj"
+SELECT *
+FROM accounts
+WHERE city = 'Mumbai';
+```
+
+---
+
+# 9.2 Primary Key Index
+
+Primary keys automatically create indexes.
+
+Example:
+
+```sql id="b0a5d8"
+id INT PRIMARY KEY
+```
+
+SQL automatically indexes `id`.
+
+---
+
+# 10. SELECT * vs Specific Columns
+
+---
+
+# Bad Practice
+
+```sql id="2y8i0j"
+SELECT *
+FROM accounts;
+```
+
+Problem:
+
+* fetches unnecessary data,
+* increases memory/network usage.
+
+---
+
+# Better Practice
+
+```sql id="jwyz9m"
+SELECT customer_name, balance
+FROM accounts;
+```
+
+Only required columns are fetched.
+
+---
+
+# 11. WHERE Clause Optimization
+
+Filtering reduces scanned rows.
+
+---
+
+# Better Query
+
+```sql id="4xnylt"
+SELECT customer_name
+FROM accounts
+WHERE city = 'Delhi';
+```
+
+Instead of loading entire table.
+
+---
+
+# 12. LIMIT for Large Data
+
+Large result sets slow applications.
+
+Use LIMIT/Pagination.
+
+---
+
+## Example
+
+```sql id="qqzjlwm"
+SELECT *
+FROM transactions
+LIMIT 10;
+```
+
+Only first 10 rows fetched.
+
+---
+
+# 13. ORDER BY Performance
+
+Sorting large datasets is expensive.
+
+---
+
+# Slow Query Example
+
+```sql id="g8s5kl"
+SELECT *
+FROM transactions
+ORDER BY amount;
+```
+
+If table has millions of rows:
+
+* sorting becomes costly.
+
+Indexes help improve sorting performance.
+
+---
+
+# 14. Query Optimization Checklist
+
+Before writing production SQL:
+
+Ask:
+
+1. Is filtering applied?
+2. Is index available?
+3. Are only required columns selected?
+4. Is sorting necessary?
+5. Can query be simplified?
+6. Is pagination required?
+7. Are joins optimized?
+
+---
+
+# 15. Performance Best Practices
+
+| Best Practice           | Reason              |
+| ----------------------- | ------------------- |
+| Use indexes wisely      | Faster searching    |
+| Avoid SELECT *          | Reduce data load    |
+| Keep transactions short | Avoid locks         |
+| Use WHERE filtering     | Reduce scans        |
+| Use LIMIT/Pagination    | Faster responses    |
+| Avoid unnecessary joins | Better execution    |
+| Optimize ORDER BY       | Reduce sorting cost |
+
+---
+
+# 16. Common Mistakes
+
+---
+
+# 16.1 Missing WHERE in UPDATE
+
+❌ Dangerous
+
+```sql id="4jx63n"
+UPDATE accounts
+SET balance = 0;
+```
+
+Updates ALL rows.
+
+---
+
+✅ Correct
+
+```sql id="htl0nj"
+UPDATE accounts
+SET balance = 0
+WHERE id = 1;
+```
+
+---
+
+# 16.2 No Index on Frequently Searched Columns
+
+Queries become slower as data grows.
+
+---
+
+# 16.3 Large SELECT Queries
+
+Fetching unnecessary columns reduces performance.
+
+---
+
+# 17. How to Think About Transactions
+
+Always ask:
+
+1. Are multiple queries related?
+2. Should they succeed together?
+3. What happens if one fails?
+4. Should rollback happen?
+5. Can concurrency issues occur?
+
+If answer is YES:
+→ use transaction.
+
+---
+
+# 18. Mini Practice Questions
+
+Try solving these without looking at solutions:
+
+1. Transfer ₹2000 from Rahul to Karan using transaction
+2. Rollback a failed transaction
+3. Create an index on `customer_name`
+4. Fetch only customer names and balances
+5. Get top 2 highest balance accounts
+6. Write a transaction that inserts transaction history after money transfer
+
